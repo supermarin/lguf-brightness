@@ -86,11 +86,7 @@ static libusb_device *get_lg_ultrafine_usb_device(libusb_device **devs)
             lgdev = dev;
         }
 
-        // printw("%04x:%04x (bus %d, device %d)",
-        //        desc.idVendor, desc.idProduct,
-        //        libusb_get_bus_number(dev), libusb_get_device_address(dev));
-
-        r = libusb_get_port_numbers(dev, path, sizeof(path));
+        // r = libusb_get_port_numbers(dev, path, sizeof(path));
         // if (r > 0)
         // {
         //     printw(" path: %d", path[0]);
@@ -153,15 +149,16 @@ uint16_t get_brightness(libusb_device_handle *handle)
     {
         printw("Unable to get brightness.\n");
         printw("libusb_control_transfer error: %s (%d)\n", libusb_error_name(res), res);
-    } else {
-        for (int i = 0; i < sizeof(data); i++) {
-            printw("0x%x  ", data[i]);
-        }
-        printw("\n");
-    }
+    } 
+    // else {
+    //     for (int i = 0; i < sizeof(data); i++) {
+    //         printw("0x%x  ", data[i]);
+    //     }
+    //     printw("\n");
+    // }
 
     uint16_t val = data[0] + (data[1] << 8);
-    printw("val=%d (0x%x 0x%x 0x%x)\n", val, data[0], data[1], data[2]);
+    // printw("val=%d (0x%x 0x%x 0x%x)\n", val, data[0], data[1], data[2]);
 
     return int((float(val) / 54000) * 100.0);
 }
@@ -180,15 +177,14 @@ void set_brightness(libusb_device_handle *handle, uint16_t val)
     {
         printw("Unable to set brightness.\n");
         printw("libusb_control_transfer error: %s\n", libusb_error_name(res));
-    } else {
-        get_brightness(handle);
-    }
+    } 
+    // else {
+    //     get_brightness(handle);
+    // }
 }
 
 void adjust_brighness(libusb_device_handle *handle)
 {
-    //timeout(-1);
-
     auto brightness = get_brightness(handle);
     printw("Press '-' or '=' to adjust brightness.\n");
     printw("Press '[' or: ']' to fine tune.\n");
@@ -199,7 +195,7 @@ void adjust_brighness(libusb_device_handle *handle)
     bool stop = false;
     while (not stop)
     {
-        printw("Current brightness = %d%4s\n", int((float(brightness) / 54000) * 100.0), " ");
+        printw("Current brightness = %d%4s\r", int((float(brightness) / 54000) * 100.0), " ");
         int c = getch();
 
         switch (c)
@@ -247,17 +243,10 @@ int main(void)
     int r, openCode;
     ssize_t cnt;
     libusb_device_handle *handle;
-    int iface, nb_ifaces = 1, first_iface = -1;
-
+ 
     initscr();
     noecho();
     cbreak();
-
-    // printw("Press a key: ");
-    // int t = getch();
-    // printw("You pressed %d\n", t);
-    // endwin();
-    // return 0;
 
     r = libusb_init(NULL);
     libusb_set_debug(NULL, LIBUSB_LOG_LEVEL_WARNING);       // LIBUSB_LOG_LEVEL_DEBUG  
@@ -289,15 +278,9 @@ int main(void)
     if (openCode == 0)
     {
         libusb_set_auto_detach_kernel_driver(handle, 1);
-        for (iface = 0; iface < nb_ifaces; iface++)
-        {
-            printw("\nClaiming interface %d...\n", iface);
-            r = libusb_claim_interface(handle, iface);
-            if (r == LIBUSB_SUCCESS) {
-                printw("   Succeeded.\n");
-            } else {
-                printw("   Failed: %d\n", r);
-            }
+        r = libusb_claim_interface(handle, 0);
+        if (r != LIBUSB_SUCCESS) {
+            printw("Failed to clain interface 0. Error: %d\n", r);
         }
 
         adjust_brighness(handle);
@@ -317,5 +300,3 @@ int main(void)
     
     return 0;
 }
-
-// libusb_set_configuration
