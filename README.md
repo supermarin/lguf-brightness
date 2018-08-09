@@ -1,6 +1,6 @@
 # Adjust brightness of LG UltraFine displays
 
-<s>Work in progress...</s>
+Work in progress...
 
 Compiles and works on Ubuntu 16.04
 
@@ -14,9 +14,9 @@ In order to compile this project, you will need `g++`, `cmake`, `libusb-1.0-0-de
 
 ### Commands to compile
 
-`cd build`
-`cmake ..`
-`make`
+* `cd build`
+* `cmake ..`
+* `make`
 
 ### In order to run this program, you need administrator privileges
 
