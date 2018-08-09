@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 project(lguf_brightness)
 
+set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 14)
 
 set(libusb_1_FIND_REQUIRED TRUE)

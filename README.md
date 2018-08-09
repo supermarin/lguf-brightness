@@ -1,9 +1,11 @@
-# Adjust brightness for LG UltraFine 4K display (cross platform)
+# Adjust brightness of LG UltraFine displays
 
-<s>Working in progress...</s>
+<s>Work in progress...</s>
 
-Not maintained. It might work or not...
- 
-Please refer to csujedihy's work
+Compiles and works on Ubuntu 16.04
+
+Based on these two projects:
+- https://github.com/unknownzerx/lguf-brightness
 - https://github.com/csujedihy/LG-Ultrafine-Brightness
-- (binary) https://github.com/csujedihy/LG-Ultrafine-Brightness/releases
+
+
