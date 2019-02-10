@@ -150,12 +150,12 @@ uint16_t get_brightness(libusb_device_handle *handle)
         printw("Unable to get brightness.\n");
         printw("libusb_control_transfer error: %s (%d)\n", libusb_error_name(res), res);
     } 
-    // else {
-    //     for (int i = 0; i < sizeof(data); i++) {
-    //         printw("0x%x  ", data[i]);
-    //     }
-    //     printw("\n");
-    // }
+    else {
+        // for (int i = 0; i < sizeof(data); i++) {
+        //     printw("0x%x  ", data[i]);
+        // }
+        // printw("\n");
+    }
 
     uint16_t val = data[0] + (data[1] << 8);
     // printw("val=%d (0x%x 0x%x 0x%x)\n", val, data[0], data[1], data[2]);
@@ -165,9 +165,9 @@ uint16_t get_brightness(libusb_device_handle *handle)
 
 void set_brightness(libusb_device_handle *handle, uint16_t val)
 {
-    u_char data[2] = {
+    u_char data[6] = {
         u_char(val & 0x00ff),
-        u_char((val >> 8) & 0x00ff) };
+        u_char((val >> 8) & 0x00ff), 0x00, 0x00, 0x00, 0x00 };
     // int res = hid_send_feature_report(handle, data, sizeof(data));
     int res = libusb_control_transfer(handle,
                                       LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_CLASS | LIBUSB_RECIPIENT_INTERFACE,
@@ -240,10 +240,10 @@ void adjust_brighness(libusb_device_handle *handle)
 int main(void)
 {
     libusb_device **devs, *lgdev;
-    int r, openCode;
+    int r, openCode, iface = 1;
     ssize_t cnt;
     libusb_device_handle *handle;
- 
+
     initscr();
     noecho();
     cbreak();
@@ -278,13 +278,22 @@ int main(void)
     if (openCode == 0)
     {
         libusb_set_auto_detach_kernel_driver(handle, 1);
-        r = libusb_claim_interface(handle, 0);
-        if (r != LIBUSB_SUCCESS) {
-            printw("Failed to clain interface 0. Error: %d\n", r);
-        }
+        // r = libusb_detach_kernel_driver(handle, iface);
+        // if (r == LIBUSB_SUCCESS) {
+            r = libusb_claim_interface(handle, iface);
+            if (r == LIBUSB_SUCCESS) {
+                adjust_brighness(handle);
+                libusb_release_interface(handle, iface);
+                libusb_attach_kernel_driver(handle, iface);
+            } else {
+                printw("Failed to claim interface %d. Error: %d\n", iface, r);
+                printw("Error: %s\n", libusb_error_name(r));
+            }
 
-        adjust_brighness(handle);
-        libusb_release_interface(handle, 0);
+        // } else {
+        //     printw("Failed to detach interface %d. Error: %d\n", iface, r);
+        //     printw("Error: %s\n", libusb_error_name(r));
+        // }
         libusb_close(handle);
     }
     else
@@ -296,6 +305,8 @@ int main(void)
 
     libusb_exit(NULL);
 
+    getch();
+    
     endwin();
     
     return 0;
