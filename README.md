@@ -1,8 +1,6 @@
 # Adjust brightness of LG UltraFine displays
 
-Work in progress...
-
-Compiles and works on Ubuntu 16.04
+Compiles and works on Ubuntu 16.04 and 18.10
 
 Based on these two projects:
 - https://github.com/unknownzerx/lguf-brightness
