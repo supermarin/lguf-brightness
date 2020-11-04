@@ -249,7 +249,11 @@ int main(void)
     cbreak();
 
     r = libusb_init(NULL);
+#if LIBUSB_API_VERSION >= 0x01000106
+    libusb_set_option(NULL, LIBUSB_OPTION_LOG_LEVEL, LIBUSB_LOG_LEVEL_WARNING);
+#else
     libusb_set_debug(NULL, LIBUSB_LOG_LEVEL_WARNING);       // LIBUSB_LOG_LEVEL_DEBUG  
+#endif
     if (r < 0)
     {
         printw("Unable to initialize libusb.\n");
