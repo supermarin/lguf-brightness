@@ -160,7 +160,7 @@ uint16_t get_brightness(libusb_device_handle *handle)
     uint16_t val = data[0] + (data[1] << 8);
     // printw("val=%d (0x%x 0x%x 0x%x)\n", val, data[0], data[1], data[2]);
 
-    return int((float(val) / 54000) * 100.0);
+    return val;
 }
 
 void set_brightness(libusb_device_handle *handle, uint16_t val)
