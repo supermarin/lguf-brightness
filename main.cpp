@@ -18,13 +18,13 @@ busb_get_device_descriptor* libusb example program to list devices on the bus
 */
 
 #include <iostream>
-// #include <stdio.h>
 #include <vector>
 #include <libusb.h>
 #include <curses.h>
 
-// From the HID spec:
+using namespace std;
 
+// From the HID spec:
 static const int HID_GET_REPORT = 0x01;
 static const int HID_SET_REPORT = 0x09;
 static const int HID_REPORT_TYPE_INPUT = 0x01;
@@ -65,9 +65,10 @@ const std::vector<uint16_t> big_steps = {
     0x3de2, 0x5415, 0x7240, 0x9b3d,
     0xd2f0};
 
-static libusb_device *get_lg_ultrafine_usb_device(libusb_device **devs)
-{
-    libusb_device *dev, *lgdev = NULL;
+static vector<libusb_device*> get_lg_ultrafine_usb_device(libusb_device **devs)
+{ 
+    vector<libusb_device *> lgdevs;
+    libusb_device *dev = NULL;
     int i = 0, j = 0;
     uint8_t path[8];
 
@@ -78,12 +79,15 @@ static libusb_device *get_lg_ultrafine_usb_device(libusb_device **devs)
         if (r < 0)
         {
             printw("failed to get device descriptor");
-            return NULL;
+            return lgdevs;
         }
 
-        if (desc.idVendor == vendor_id && desc.idProduct == product_id)
+        // std::cout << "Device: " << desc.idVendor << "product: " << desc.idProduct;
+        if (desc.idVendor == vendor_id)
         {
-            lgdev = dev;
+            if (desc.idProduct == product_id) {
+              lgdevs.push_back(dev);
+            }
         }
 
         // r = libusb_get_port_numbers(dev, path, sizeof(path));
@@ -96,7 +100,12 @@ static libusb_device *get_lg_ultrafine_usb_device(libusb_device **devs)
         // printw("\n");
     }
 
-    return lgdev;
+    for (auto d : lgdevs) {
+      struct libusb_device_descriptor desc;
+      int r = libusb_get_device_descriptor(d, &desc);
+      std::cout << "FOUND DEVICE. Vendor: " << desc.idVendor << "Product: " << desc.idProduct << "\n";
+    }
+    return lgdevs;
 }
 
 uint16_t next_step(uint16_t val, const vector<uint16_t> &steps)
@@ -239,7 +248,8 @@ void adjust_brighness(libusb_device_handle *handle)
 
 int main(void)
 {
-    libusb_device **devs, *lgdev;
+    vector<libusb_device*> lgdevs;
+    libusb_device **devs;
     int r, openCode, iface = 1;
     ssize_t cnt;
     libusb_device_handle *handle;
@@ -269,40 +279,43 @@ int main(void)
         return (int)cnt;
     }
 
-    lgdev = get_lg_ultrafine_usb_device(devs);
+    lgdevs = get_lg_ultrafine_usb_device(devs);
     
-    if (lgdev == NULL)
+    if (lgdevs.empty())
     {
         printw("Failed to get LG screen device.\n");
         endwin();
         return -1;
     }
 
-    openCode = libusb_open(lgdev, &handle);
-    if (openCode == 0)
-    {
-        libusb_set_auto_detach_kernel_driver(handle, 1);
-        // r = libusb_detach_kernel_driver(handle, iface);
-        // if (r == LIBUSB_SUCCESS) {
-            r = libusb_claim_interface(handle, iface);
-            if (r == LIBUSB_SUCCESS) {
-                adjust_brighness(handle);
-                libusb_release_interface(handle, iface);
-                libusb_attach_kernel_driver(handle, iface);
-            } else {
-                printw("Failed to claim interface %d. Error: %d\n", iface, r);
-                printw("Error: %s\n", libusb_error_name(r));
-            }
 
-        // } else {
-        //     printw("Failed to detach interface %d. Error: %d\n", iface, r);
-        //     printw("Error: %s\n", libusb_error_name(r));
-        // }
-        libusb_close(handle);
-    }
-    else
-    {
-        printw("libusb_open failed and returned %d\n", openCode);
+    for (auto lgdev : lgdevs) {
+      openCode = libusb_open(lgdev, &handle);
+      if (openCode == 0)
+      {
+          libusb_set_auto_detach_kernel_driver(handle, 1);
+          // r = libusb_detach_kernel_driver(handle, iface);
+          // if (r == LIBUSB_SUCCESS) {
+              r = libusb_claim_interface(handle, iface);
+              if (r == LIBUSB_SUCCESS) {
+                  adjust_brighness(handle);
+                  libusb_release_interface(handle, iface);
+                  libusb_attach_kernel_driver(handle, iface);
+              } else {
+                  printw("Failed to claim interface %d. Error: %d\n", iface, r);
+                  printw("Error: %s\n", libusb_error_name(r));
+              }
+
+          // } else {
+          //     printw("Failed to detach interface %d. Error: %d\n", iface, r);
+          //     printw("Error: %s\n", libusb_error_name(r));
+          // }
+          libusb_close(handle);
+      }
+      else
+      {
+          printw("libusb_open failed and returned %d\n", openCode);
+      }
     }
 
     libusb_free_device_list(devs, 1);
