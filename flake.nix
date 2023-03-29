@@ -4,7 +4,7 @@
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
-      deps = with pkgs; [ pkgconfig llvm libusb ncurses cmake ];
+      deps = with pkgs; [ pkgconfig llvm libusb cmake ];
     in
     {
       devShell."${system}" = with pkgs; mkShell {

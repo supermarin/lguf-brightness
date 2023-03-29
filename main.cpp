@@ -20,7 +20,6 @@ busb_get_device_descriptor* libusb example program to list devices on the bus
 #include <iostream>
 #include <vector>
 #include <libusb.h>
-#include <curses.h>
 
 using namespace std;
 
@@ -78,26 +77,16 @@ static vector<libusb_device*> get_lg_ultrafine_usb_device(libusb_device **devs)
         int r = libusb_get_device_descriptor(dev, &desc);
         if (r < 0)
         {
-            printw("failed to get device descriptor");
+            printf("failed to get device descriptor");
             return lgdevs;
         }
 
-        // std::cout << "Device: " << desc.idVendor << "product: " << desc.idProduct;
         if (desc.idVendor == vendor_id)
         {
             if (desc.idProduct == product_id) {
               lgdevs.push_back(dev);
             }
         }
-
-        // r = libusb_get_port_numbers(dev, path, sizeof(path));
-        // if (r > 0)
-        // {
-        //     printw(" path: %d", path[0]);
-        //     for (j = 1; j < r; j++)
-        //         printw(".%d", path[j]);
-        // }
-        // printw("\n");
     }
 
     for (auto d : lgdevs) {
@@ -156,18 +145,19 @@ uint16_t get_brightness(libusb_device_handle *handle)
 
     if (res < 0)
     {
-        printw("Unable to get brightness.\n");
-        printw("libusb_control_transfer error: %s (%d)\n", libusb_error_name(res), res);
+        printf("Unable to get brightness.\n");
+        printf("libusb_control_transfer error: %s (%d)\n", libusb_error_name(res), res);
     } 
     else {
-        // for (int i = 0; i < sizeof(data); i++) {
-        //     printw("0x%x  ", data[i]);
-        // }
-        // printw("\n");
+        printf("Got brightness values.\n");
+        for (int i = 0; i < sizeof(data); i++) {
+            printf("0x%x  ", data[i]);
+        }
+        printf("\n");
     }
 
     uint16_t val = data[0] + (data[1] << 8);
-    // printw("val=%d (0x%x 0x%x 0x%x)\n", val, data[0], data[1], data[2]);
+    printf("val=%d (0x%x 0x%x 0x%x)\n", val, data[0], data[1], data[2]);
 
     return val;
 }
@@ -184,79 +174,69 @@ void set_brightness(libusb_device_handle *handle, uint16_t val)
 
     if (res < 0)
     {
-        printw("Unable to set brightness.\n");
-        printw("libusb_control_transfer error: %s\n", libusb_error_name(res));
+        printf("Unable to set brightness.\n");
+        printf("libusb_control_transfer error: %s\n", libusb_error_name(res));
     } 
-    // else {
-    //     get_brightness(handle);
-    // }
 }
 
-void adjust_brighness(libusb_device_handle *handle)
+void adjust_brighness(libusb_device_handle *handle, char delta)
 {
     auto brightness = get_brightness(handle);
-    printw("Press '-' or '=' to adjust brightness.\n");
-    printw("Press '[' or: ']' to fine tune.\n");
-    printw("Press 'p' to use the minimum brightness\n");
-    printw("Press '\\' to use the maximum brightness\n");
-    printw("Press 'q' to quit.\n");
+    printf("Current brightness = %d%4s\r", int((float(brightness) / 54000) * 100.0), " ");
 
-    bool stop = false;
-    while (not stop)
+    int c = delta;
+    switch (c)
     {
-        printw("Current brightness = %d%4s\r", int((float(brightness) / 54000) * 100.0), " ");
-        int c = getch();
-
-        switch (c)
-        {
-            case '+':
-            case '=':
-                brightness = next_step(brightness, big_steps);
-                set_brightness(handle, brightness);
-                break;
-            case '-':
-            case '_':
-                brightness = prev_step(brightness, big_steps);
-                set_brightness(handle, brightness);
-                break;
-            case ']':
-                brightness = next_step(brightness, small_steps);
-                set_brightness(handle, brightness);
-                break;
-            case '[':
-                brightness = prev_step(brightness, small_steps);
-                set_brightness(handle, brightness);
-                break;
-            case '\\':
-                brightness = max_brightness;
-                set_brightness(handle, brightness);
-                break;
-            case 'p':
-                brightness = min_brightness;
-                set_brightness(handle, brightness);
-                break;
-                case 'q':
-            case '\n':
-                printw("You pressed q.\n");
-                stop = true;
-                break;
-            default:
-                break;
-        }
+      case '+':
+      case '=':
+        brightness = next_step(brightness, big_steps);
+        set_brightness(handle, brightness);
+        break;
+      case '-':
+      case '_':
+        brightness = prev_step(brightness, big_steps);
+        set_brightness(handle, brightness);
+        break;
+      case ']':
+        brightness = next_step(brightness, small_steps);
+        set_brightness(handle, brightness);
+        break;
+      case '[':
+        brightness = prev_step(brightness, small_steps);
+        set_brightness(handle, brightness);
+        break;
+      case '\\':
+        brightness = max_brightness;
+        set_brightness(handle, brightness);
+        break;
+      case 'p':
+        brightness = min_brightness;
+        set_brightness(handle, brightness);
+        break;
+      case 'q':
+      case '\n':
+        printf("You pressed q.\n");
+        break;
+      default:
+        break;
     }
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
+    
+    if (argc != 2) { 
+        printf("Usage: lgufbrightness [+|-]");
+        return -1;
+    }
+    char delta = argv[1][0];
+    printf("%c passed.", delta);
+
     vector<libusb_device*> lgdevs;
     libusb_device **devs;
     int r, openCode, iface = 1;
     ssize_t cnt;
     libusb_device_handle *handle;
-
-    initscr();
-    noecho();
-    cbreak();
 
     r = libusb_init(NULL);
 #if LIBUSB_API_VERSION >= 0x01000106
@@ -266,65 +246,49 @@ int main(void)
 #endif
     if (r < 0)
     {
-        printw("Unable to initialize libusb.\n");
-        endwin();
+        printf("Unable to initialize libusb.\n");
         return r;
     }
 
     cnt = libusb_get_device_list(NULL, &devs);
     if (cnt < 0)
     {
-        printw("Unable to get USB device list (%ld).\n", cnt);
-        endwin();
+        printf("Unable to get USB device list (%ld).\n", cnt);
         return (int)cnt;
     }
 
     lgdevs = get_lg_ultrafine_usb_device(devs);
-    
     if (lgdevs.empty())
     {
-        printw("Failed to get LG screen device.\n");
-        endwin();
+        printf("Failed to get LG screen device.\n");
         return -1;
     }
 
 
     for (auto lgdev : lgdevs) {
-      openCode = libusb_open(lgdev, &handle);
-      if (openCode == 0)
-      {
-          libusb_set_auto_detach_kernel_driver(handle, 1);
-          // r = libusb_detach_kernel_driver(handle, iface);
-          // if (r == LIBUSB_SUCCESS) {
-              r = libusb_claim_interface(handle, iface);
-              if (r == LIBUSB_SUCCESS) {
-                  adjust_brighness(handle);
-                  libusb_release_interface(handle, iface);
-                  libusb_attach_kernel_driver(handle, iface);
-              } else {
-                  printw("Failed to claim interface %d. Error: %d\n", iface, r);
-                  printw("Error: %s\n", libusb_error_name(r));
-              }
+        openCode = libusb_open(lgdev, &handle);
+        if (openCode == 0)
+        {
+            libusb_set_auto_detach_kernel_driver(handle, 1);
+            r = libusb_claim_interface(handle, iface);
+            if (r == LIBUSB_SUCCESS) {
+                adjust_brighness(handle, delta);
+                libusb_release_interface(handle, iface);
+                libusb_attach_kernel_driver(handle, iface);
+            } else {
+                printf("Failed to claim interface %d. Error: %d\n", iface, r);
+                printf("Error: %s\n", libusb_error_name(r));
+            }
 
-          // } else {
-          //     printw("Failed to detach interface %d. Error: %d\n", iface, r);
-          //     printw("Error: %s\n", libusb_error_name(r));
-          // }
-          libusb_close(handle);
-      }
-      else
-      {
-          printw("libusb_open failed and returned %d\n", openCode);
-      }
+            libusb_close(handle);
+        }
+        else
+        {
+            printf("libusb_open failed and returned %d\n", openCode);
+        }
     }
 
     libusb_free_device_list(devs, 1);
-
     libusb_exit(NULL);
-
-    getch();
-    
-    endwin();
-    
     return 0;
 }
