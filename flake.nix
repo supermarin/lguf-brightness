@@ -7,7 +7,7 @@
       deps = with pkgs; [ pkgconfig llvm libusb cmake ];
     in
     {
-      name = "lgultrafine";
+      name = "lgufbrightness";
       devShell."${system}" = with pkgs; mkShell {
         buildInputs = [ lldb ] ++ deps;
       };
@@ -17,8 +17,7 @@
         buildInputs = deps;
         src = ./.;
         installPhase = ''
-          mkdir -p $out/bin
-          cp lguf_brightness $out/bin/lgufbrightness
+          install -m755 -D lgufbrightness $out/bin/lgufbrightness
         '';
       };
     };
