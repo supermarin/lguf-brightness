@@ -182,7 +182,7 @@ void set_brightness(libusb_device_handle *handle, uint16_t val)
 void adjust_brighness(libusb_device_handle *handle, char delta)
 {
     auto brightness = get_brightness(handle);
-    printf("Current brightness = %d%4s\r", int((float(brightness) / 54000) * 100.0), " ");
+    printf("Old brightness = %d%4s\n", int((float(brightness) / 54000) * 100.0), " ");
 
     int c = delta;
     switch (c)
@@ -214,6 +214,9 @@ void adjust_brighness(libusb_device_handle *handle, char delta)
       default:
         break;
     }
+
+    brightness = get_brightness(handle);
+    printf("New brightness = %d%4s\n", int((float(brightness) / 54000) * 100.0), " ");
 }
 
 int main(int argc, char *argv[])
