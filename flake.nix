@@ -13,6 +13,7 @@
       };
       defaultPackage."${system}" = with pkgs; stdenv.mkDerivation {
         name = "lgufbrightness";
+        version = "2023-04-19";
         buildInputs = deps;
         src = ./.;
         installPhase = ''
