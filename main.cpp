@@ -188,34 +188,28 @@ void adjust_brighness(libusb_device_handle *handle, char delta)
     switch (c)
     {
       case '+':
-      case '=':
         brightness = next_step(brightness, big_steps);
         set_brightness(handle, brightness);
         break;
       case '-':
-      case '_':
         brightness = prev_step(brightness, big_steps);
         set_brightness(handle, brightness);
         break;
-      case ']':
+      case '=':
         brightness = next_step(brightness, small_steps);
         set_brightness(handle, brightness);
         break;
-      case '[':
+      case '_':
         brightness = prev_step(brightness, small_steps);
         set_brightness(handle, brightness);
         break;
-      case '\\':
+      case 'h':
         brightness = max_brightness;
         set_brightness(handle, brightness);
         break;
-      case 'p':
+      case 'l':
         brightness = min_brightness;
         set_brightness(handle, brightness);
-        break;
-      case 'q':
-      case '\n':
-        printf("You pressed q.\n");
         break;
       default:
         break;
