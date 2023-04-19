@@ -149,11 +149,9 @@ uint16_t get_brightness(libusb_device_handle *handle)
         printf("libusb_control_transfer error: %s (%d)\n", libusb_error_name(res), res);
     } 
     else {
-        printf("Got brightness values.\n");
         for (int i = 0; i < sizeof(data); i++) {
             printf("0x%x  ", data[i]);
         }
-        printf("\n");
     }
 
     uint16_t val = data[0] + (data[1] << 8);
