@@ -7,6 +7,7 @@
       deps = with pkgs; [ pkgconfig llvm libusb cmake ];
     in
     {
+      name = "lgultrafine";
       devShell."${system}" = with pkgs; mkShell {
         buildInputs = [ lldb ] ++ deps;
       };
