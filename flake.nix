@@ -9,7 +9,7 @@
     {
       name = "lgufbrightness";
       devShell."${system}" = with pkgs; mkShell {
-        buildInputs = [ lldb ] ++ deps;
+        packages = [ lldb ccls clang ];
       };
       defaultPackage."${system}" = with pkgs; stdenv.mkDerivation {
         name = "lgufbrightness";
