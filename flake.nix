@@ -4,7 +4,7 @@
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
-      deps = with pkgs; [ pkgconfig llvm libusb cmake ];
+      deps = with pkgs; [ pkg-config llvm libusb cmake ];
     in
     {
       name = "lgufbrightness";
